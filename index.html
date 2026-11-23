@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#fbf7f2">
+<title>Lista de regalos</title>
+<style>
+:root{--bg:#fbf7f2;--card:#fff;--text:#2b2230;--muted:#6f6577;--line:#eadfd5;--rose:#b83b63;--rose2:#fbe6ec;--ok:#2f7d4f;--ok2:#e4f4ea}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:18px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+.wrap{max-width:760px;margin:auto;padding:22px 16px 60px}
+.hero{text-align:center;padding:26px 18px;background:linear-gradient(160deg,#fff,var(--rose2));border:1px solid var(--line);border-radius:22px;margin-bottom:18px}
+.hero .h{font-size:40px;line-height:1}.hero h1{font-size:28px;margin:10px 0 8px;line-height:1.2}.hero p{margin:8px 0;color:var(--muted)}
+.how{display:grid;gap:8px;margin:14px 0 0;text-align:left;font-size:17px}.how div{background:#fff;border:1px solid var(--line);border-radius:14px;padding:10px 14px}
+.bar{position:sticky;top:0;z-index:5;background:var(--bg);padding:10px 0 8px}
+.count{font-size:16px;color:var(--muted);margin-bottom:8px}
+.chips{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px}.chip{white-space:nowrap;border:2px solid var(--line);background:#fff;color:var(--text);padding:10px 16px;border-radius:99px;font:600 16px inherit;cursor:pointer}.chip.on{background:var(--rose);border-color:var(--rose);color:#fff}
+.only{margin-top:8px;font-size:16px;display:flex;align-items:center;gap:8px;color:var(--muted)}.only input{width:22px;height:22px}
+.cat{font-size:20px;margin:26px 0 10px}
+.grid{display:grid;grid-template-columns:1fr;gap:12px}@media(min-width:640px){.grid{grid-template-columns:1fr 1fr}}
+.gift{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:16px;display:flex;flex-direction:column;gap:10px}
+.top{display:flex;align-items:center;gap:12px}.em{font-size:38px;width:52px;text-align:center}.nm{font-weight:700;font-size:19px;line-height:1.25}.st{font-size:15px;color:var(--muted)}
+.gift.taken{opacity:.55}.gift.mine{border-color:var(--ok);background:var(--ok2)}
+.b{min-height:54px;border:0;border-radius:14px;font:700 18px inherit;cursor:pointer;width:100%;padding:12px}.b.main{background:var(--rose);color:#fff}.b.main:active{transform:scale(.98)}.b.off{background:#e8e2dc;color:#8a8190;cursor:default}.b.ghost{background:#fff;border:2px solid var(--line);color:var(--text)}
+.mineTxt{color:var(--ok);font-weight:700;text-align:center}
+.banner{background:#fff3cd;border:1px solid #f0d78c;border-radius:14px;padding:12px 14px;margin-bottom:14px;font-size:16px}
+.foot{text-align:center;color:var(--muted);margin-top:34px;font-size:16px}
+.ov{position:fixed;inset:0;background:rgba(43,34,48,.55);display:grid;place-items:center;padding:18px;z-index:20}.ov.hidden{display:none}
+.dlg{background:#fff;border-radius:22px;padding:24px;max-width:420px;width:100%;text-align:center}.dlg h2{margin:0 0 8px;font-size:23px}.dlg p{margin:6px 0 18px;color:var(--muted)}.dlg .b{margin-top:8px}
+</style>
+</head>
+<body>
+<div class="wrap">
+ <div class="hero">
+  <div class="h">♥</div>
+  <h1>Gracias por acompañarnos en este día tan especial</h1>
+  <p>Tu cariño y tu presencia son el mejor regalo. Como nos iremos a vivir juntos a una casa arrendada, armamos esta lista con cosas para el hogar, por si quieres regalarnos algo.</p>
+  <div class="how">
+   <div><b>1.</b> Mira la lista y elige lo que quieras regalarnos.</div>
+   <div><b>2.</b> Toca <b>"Quiero regalar esto"</b> y confirma. Queda reservado para que nadie más lo repita.</div>
+   <div><b>3.</b> No necesitas registrarte ni dar tu nombre.</div>
+  </div>
+ </div>
+ <div id="banner"></div>
+ <div class="bar">
+  <div class="count" id="count">Cargando regalos...</div>
+  <div class="chips" id="chips"></div>
+  <label class="only"><input type="checkbox" id="onlyFree"> Mostrar solo los disponibles</label>
+ </div>
+ <div id="list"></div>
+ <div class="foot">¿Prefieres regalarnos otra cosa para la casa, o tienes dudas?<br>Pregúntanos directamente, ¡siempre será bienvenido! ♥</div>
+</div>
+<div class="ov hidden" id="ov"><div class="dlg" id="dlg"></div></div>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script>
+/* ====== 1) PEGA AQUÍ LOS DATOS DE TU PROYECTO DE FIREBASE ====== */
+const CONFIG={
+  apiKey:"PEGA_AQUI_TU_API_KEY",
+  authDomain:"PEGA_AQUI",
+  projectId:"PEGA_AQUI",
+  storageBucket:"PEGA_AQUI",
+  messagingSenderId:"PEGA_AQUI",
+  appId:"PEGA_AQUI"
+};
+/* ====== 2) LISTA DE REGALOS ======
+   ['emoji','Nombre', n]  -> n (opcional) = cuántas personas pueden aportar a ese regalo (ej: refrigerador entre 4).
+   OJO: no cambies el nombre de un regalo que ya fue reservado (el nombre identifica la reserva). */
+const LIST={
+'Electrodomésticos grandes':[['🧊','Refrigerador',4],['🧺','Lavadora',4],['🔥','Cocina (a gas o encimera)',3],['📺','Televisor',3],['♨️','Horno eléctrico'],['🍿','Microondas'],['🧹','Aspiradora'],['🤖','Robot aspirador',2],['👕','Plancha a vapor'],['🌀','Ventilador'],['♨️','Calefactor']],
+'Electrodomésticos de cocina':[['🫖','Hervidor eléctrico'],['🍞','Tostador'],['🥤','Juguera o licuadora'],['🥣','Batidora'],['🥪','Sandwichera'],['🍟','Freidora de aire'],['☕','Cafetera'],['🍚','Arrocera'],['🍲','Olla a presión'],['🍊','Exprimidor'],['⚖️','Balanza de cocina']],
+'Cocina y mesa':[['🍳','Juego de ollas'],['🥘','Juego de sartenes'],['🔪','Juego de cuchillos'],['🍽️','Servicio de mesa (platos)'],['🥄','Juego de cubiertos'],['☕','Juego de tazas'],['🥛','Juego de vasos'],['🍷','Juego de copas'],['🥗','Set de bowls y ensaladeras'],['🫙','Set de contenedores para guardar comida'],['🥢','Set de utensilios de cocina'],['🔲','Tablas para cortar'],['🍰','Fuentes y moldes para horno'],['🫗','Jarros y jarras'],['🧊','Termo'],['🧺','Individuales y mantel'],['🥫','Colador y escurridor'],['🧂','Set de especieros']],
+'Muebles':[['🛋️','Sofá',3],['🍴','Mesa de comedor con sillas',3],['🛏️','Cama con colchón',3],['🕯️','Veladores'],['🗄️','Cómoda'],['🚪','Clóset o ropero',2],['🪑','Escritorio y silla'],['📚','Estante o librería'],['☕','Mesa de centro'],['📺','Rack para el televisor'],['👟','Zapatero'],['🪑','Sillas extra']],
+'Dormitorio y baño':[['🛏️','Juego de sábanas'],['🛌','Plumón o cubrecama'],['💤','Almohadas'],['🪟','Cortinas (blackout)'],['🛁','Set de toallas'],['🚿','Cortina de baño y accesorios'],['🧴','Set de accesorios de baño'],['🟫','Alfombras'],['🧺','Canasto para ropa'],['🛡️','Protector de colchón']],
+'Lavandería y limpieza':[['👚','Tendedero'],['🧼','Tabla de planchar'],['🧹','Set de escoba, pala y mopa'],['🪣','Baldes y set de limpieza'],['📦','Organizadores y canastos']],
+'Hogar y decoración':[['💡','Lámparas'],['🪞','Espejo'],['🖼️','Cuadros y decoración'],['🛋️','Cojines y mantas'],['🪴','Macetas y plantas'],['🧰','Caja de herramientas básica'],['🔌','Alargadores y regletas'],['⏰','Reloj de pared']]
+};
+const slug=s=>s.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
+const G=[];Object.entries(LIST).forEach(([cat,a])=>a.forEach(([e,n,c])=>G.push({id:slug(n),e,n,cat,c:c||1})));
+const $=id=>document.getElementById(id);
+let db=null,taken=new Set(),loaded=false,filter='Todos',onlyFree=false,mine=[];
+try{mine=JSON.parse(localStorage.getItem('regalos-mios')||'[]')}catch(e){}
+const saveMine=()=>{try{localStorage.setItem('regalos-mios',JSON.stringify(mine))}catch(e){}};
+const slots=g=>Array.from({length:g.c},(_,i)=>g.c>1?g.id+'_'+(i+1):g.id);
+const freeN=g=>slots(g).filter(s=>!taken.has(s)).length;
+const mineOf=g=>slots(g).filter(s=>mine.includes(s));
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function banner(t){$('banner').innerHTML=t?`<div class="banner">${t}</div>`:''}
+try{
+  if(CONFIG.apiKey.indexOf('PEGA')===0)throw 'cfg';
+  firebase.initializeApp(CONFIG);db=firebase.firestore();
+  db.collection('reservas').onSnapshot(s=>{taken=new Set(s.docs.map(d=>d.id));loaded=true;banner('');render()},()=>{loaded=true;banner('No pudimos conectar con la lista. Revisa tu internet e intenta de nuevo.');render()});
+}catch(e){loaded=true;banner(e==='cfg'?'Falta configurar la base de datos (ver instrucciones). Por ahora los botones están desactivados.':'No se pudo iniciar la lista.')}
+function render(){
+  const cats=['Todos',...Object.keys(LIST)];
+  $('chips').innerHTML=cats.map(c=>`<button class="chip ${c===filter?'on':''}" onclick="setF('${c}')">${c}</button>`).join('');
+  const avail=G.filter(g=>freeN(g)>0).length;
+  $('count').textContent=loaded?`Quedan ${avail} de ${G.length} regalos disponibles`:'Cargando regalos...';
+  let h='';
+  Object.keys(LIST).forEach(cat=>{
+    if(filter!=='Todos'&&filter!==cat)return;
+    const l=G.filter(g=>g.cat===cat&&(!onlyFree||freeN(g)>0||mineOf(g).length));
+    if(!l.length)return;
+    h+=`<h2 class="cat">${esc(cat)}</h2><div class="grid">${l.map(card).join('')}</div>`;
+  });
+  $('list').innerHTML=h||'<p style="text-align:center;color:var(--muted)">No hay regalos disponibles en esta categoría. ¡Gracias por la intención!</p>';
+}
+function card(g){
+  const f=freeN(g),m=mineOf(g).length,multi=g.c>1;
+  const st=m?'Tú lo reservaste':f===0?'Reservado':multi?`Entre varias personas · quedan ${f} de ${g.c}`:'Disponible';
+  let act;
+  if(m)act=`<div class="mineTxt">✓ Reservado por ti</div><button class="b ghost" onclick="undoAsk('${g.id}')">Me equivoqué, deshacer</button>`;
+  else if(f===0)act=`<button class="b off" disabled>Ya está reservado</button>`;
+  else act=`<button class="b main" ${db?'':'disabled'} onclick="ask('${g.id}')">${multi?'Quiero aportar a este regalo':'Quiero regalar esto'}</button>`;
+  return `<div class="gift ${m?'mine':f===0?'taken':''}"><div class="top"><div class="em">${g.e}</div><div><div class="nm">${esc(g.n)}</div><div class="st">${st}</div></div></div>${act}</div>`;
+}
+window.setF=c=>{filter=c;render();window.scrollTo({top:0,behavior:'smooth'})};
+$('onlyFree').onchange=e=>{onlyFree=e.target.checked;render()};
+const gid=id=>G.find(g=>g.id===id);
+function dlg(h){$('dlg').innerHTML=h;$('ov').classList.remove('hidden')}
+window.closeD=()=>$('ov').classList.add('hidden');
+window.ask=id=>{const g=gid(id);dlg(`<h2>${g.e} ${esc(g.n)}</h2><p>${g.c>1?'Tu aporte quedará anotado para que otros sepan cuántos faltan.':'Quedará reservado y nadie más podrá elegirlo.'}</p><button class="b main" onclick="doRes('${id}')">Sí, lo regalo yo</button><button class="b ghost" onclick="closeD()">No, volver</button>`)};
+window.doRes=async id=>{
+  const g=gid(id);dlg('<h2>Reservando...</h2><p>Un momento, por favor.</p>');
+  for(const s of slots(g)){
+    if(taken.has(s))continue;
+    try{await db.collection('reservas').doc(s).set({r:true});mine.push(s);saveMine();taken.add(s);render();
+      dlg(`<h2>¡Listo! ♥</h2><p>Reservaste <b>${esc(g.n)}</b>. Muchas gracias de todo corazón.<br>Si te equivocaste, puedes deshacerlo desde este mismo teléfono.</p><button class="b main" onclick="closeD()">Entendido</button>`);return}
+    catch(e){}
+  }
+  dlg(`<h2>Ups</h2><p>No pudimos reservarlo. Puede que alguien lo haya elegido justo ahora, o que falle la conexión. Mira la lista actualizada e intenta con otro.</p><button class="b main" onclick="closeD()">Volver a la lista</button>`);
+};
+window.undoAsk=id=>{const g=gid(id);dlg(`<h2>¿Deshacer la reserva?</h2><p>${esc(g.n)} volverá a quedar disponible para otras personas.</p><button class="b main" onclick="doUndo('${id}')">Sí, deshacer</button><button class="b ghost" onclick="closeD()">No, dejarlo reservado</button>`)};
+window.doUndo=async id=>{
+  const g=gid(id);
+  try{for(const s of mineOf(g)){await db.collection('reservas').doc(s).delete();mine=mine.filter(x=>x!==s);taken.delete(s)}saveMine();render();closeD()}
+  catch(e){dlg('<h2>Ups</h2><p>No pudimos deshacerlo. Intenta de nuevo en un momento.</p><button class="b main" onclick="closeD()">Cerrar</button>')}
+};
+render();
+</script>
+</body></html>
