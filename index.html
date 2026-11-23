@@ -34,7 +34,7 @@
  <div class="hero">
   <div class="h">♥</div>
   <h1>Gracias por acompañarnos en este día tan especial</h1>
-  <p>Tu cariño y tu presencia son el mejor regalo. Como estamos comenzando a formar un hogar, hicimos esta lista con cosas para el, por si quieres regalarnos algo.</p>
+  <p>Tu cariño y tu presencia son el mejor regalo. Como nos iremos a vivir juntos a una casa arrendada, armamos esta lista con cosas para el hogar, por si quieres regalarnos algo.</p>
   <div class="how">
    <div><b>1.</b> Mira la lista y elige lo que quieras regalarnos.</div>
    <div><b>2.</b> Toca <b>"Quiero regalar esto"</b> y confirma. Queda reservado para que nadie más lo repita.</div>
@@ -55,7 +55,7 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 <script>
-/* ====== 1) PEGA AQUÍ LOS DATOS DE TU PROYECTO DE FIREBASE ====== */
+/* ====== 1) DATOS DE TU PROYECTO DE FIREBASE (ya configurados) ====== */
 const CONFIG={
   apiKey:"AIzaSyDt3JOOLzSNMcArENLEyXo1bdXs30KAs4s",
   authDomain:"lista-de-regalos-243a4.firebaseapp.com",
@@ -65,13 +65,13 @@ const CONFIG={
   appId:"1:944870712195:web:24ad9a4cf6c550f813ccb6"
 };
 /* ====== 2) LISTA DE REGALOS ======
-   ['emoji','Nombre', n]  -> n (opcional) = cuántas personas pueden aportar a ese regalo (ej: refrigerador entre 4).
+   ['emoji','Nombre']  -> cada regalo se reserva completo por una sola persona.
    OJO: no cambies el nombre de un regalo que ya fue reservado (el nombre identifica la reserva). */
 const LIST={
-'Electrodomésticos grandes':[['🧊','Refrigerador',4],['🧺','Lavadora',4],['🔥','Cocina (a gas o encimera)',3],['📺','Televisor',3],['♨️','Horno eléctrico'],['🍿','Microondas'],['🧹','Aspiradora'],['🤖','Robot aspirador',2],['👕','Plancha a vapor'],['🌀','Ventilador'],['♨️','Calefactor']],
-'Electrodomésticos de cocina':[['🫖','Hervidor eléctrico'],['🍞','Tostador'],['🥤','Juguera o licuadora'],['🥣','Batidora'],['🥪','Sandwichera'],['🍟','Freidora de aire'],['☕','Cafetera'],['🍚','Arrocera'],['🍲','Olla a presión'],['🍊','Exprimidor'],['⚖️','Balanza de cocina']],
+'Electrodomésticos grandes':[['🧊','Refrigerador'],['🧺','Lavadora'],['🔥','Cocina (a gas o encimera)'],['📺','Televisor'],['♨️','Horno eléctrico'],['🍿','Microondas'],['🧹','Aspiradora'],['🤖','Robot aspirador'],['👕','Plancha a vapor'],['🌀','Ventilador'],['♨️','Calefactor']],
+'Electrodomésticos de cocina':[['🫖','Hervidor eléctrico'],['🍞','Tostador'],['🥤','Juguera o licuadora'],['🥣','Batidora'],['🥪','Sandwichera'],['🍟','Freidora de aire'],['☕','Cafetera'],['🍚','Arrocera'],['🍲','Olla a presión'],['🍊','Exprimidor']],
 'Cocina y mesa':[['🍳','Juego de ollas'],['🥘','Juego de sartenes'],['🔪','Juego de cuchillos'],['🍽️','Servicio de mesa (platos)'],['🥄','Juego de cubiertos'],['☕','Juego de tazas'],['🥛','Juego de vasos'],['🍷','Juego de copas'],['🥗','Set de bowls y ensaladeras'],['🫙','Set de contenedores para guardar comida'],['🥢','Set de utensilios de cocina'],['🔲','Tablas para cortar'],['🍰','Fuentes y moldes para horno'],['🫗','Jarros y jarras'],['🧊','Termo'],['🧺','Individuales y mantel'],['🥫','Colador y escurridor'],['🧂','Set de especieros']],
-'Muebles':[['🛋️','Sofá',3],['🍴','Mesa de comedor con sillas',3],['🛏️','Cama con colchón',3],['🕯️','Veladores'],['🗄️','Cómoda'],['🚪','Clóset o ropero',2],['🪑','Escritorio y silla'],['📚','Estante o librería'],['☕','Mesa de centro'],['📺','Rack para el televisor'],['👟','Zapatero'],['🪑','Sillas extra']],
+'Muebles':[['🛋️','Sofá'],['🍴','Mesa de comedor con sillas'],['🛏️','Cama con colchón'],['🕯️','Veladores'],['🗄️','Cómoda'],['🚪','Clóset o ropero'],['🪑','Escritorio y silla'],['📚','Estante o librería'],['☕','Mesa de centro'],['📺','Rack para el televisor'],['👟','Zapatero'],['🪑','Sillas extra']],
 'Dormitorio y baño':[['🛏️','Juego de sábanas'],['🛌','Plumón o cubrecama'],['💤','Almohadas'],['🪟','Cortinas (blackout)'],['🛁','Set de toallas'],['🚿','Cortina de baño y accesorios'],['🧴','Set de accesorios de baño'],['🟫','Alfombras'],['🧺','Canasto para ropa'],['🛡️','Protector de colchón']],
 'Lavandería y limpieza':[['👚','Tendedero'],['🧼','Tabla de planchar'],['🧹','Set de escoba, pala y mopa'],['🪣','Baldes y set de limpieza'],['📦','Organizadores y canastos']],
 'Hogar y decoración':[['💡','Lámparas'],['🪞','Espejo'],['🖼️','Cuadros y decoración'],['🛋️','Cojines y mantas'],['🪴','Macetas y plantas'],['🧰','Caja de herramientas básica'],['🔌','Alargadores y regletas'],['⏰','Reloj de pared']]
